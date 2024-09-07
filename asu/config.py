@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     repository_allow_list: list = []
     base_container: str = "ghcr.io/openwrt/imagebuilder"
     update_token: Union[str, None] = "foobar"
+    container_type: str = "podman"
     container_host: str = "localhost"
     container_identity: str = ""
     branches: dict = {

@@ -13,6 +13,7 @@ import httpx
 import nacl.signing
 import redis
 from podman import PodmanClient
+from docker import DockerClient
 from rq import Queue
 
 from asu.build_request import BuildRequest
@@ -221,6 +222,11 @@ def get_podman():
         identity=settings.container_identity,
     )
 
+def get_docker():
+    return Docker(
+        base_url=settings.container_host
+    )
+
 
 def diff_packages(requested_packages: list, default_packages: set) -> list[str]:
     """Return a list of packages to install and remove
@@ -239,7 +245,7 @@ def diff_packages(requested_packages: list, default_packages: set) -> list[str]:
 
 
 def run_container(
-    podman: PodmanClient,
+    client: PodmanClient|DockerClient,
     image,
     command,
     mounts=[],
@@ -251,7 +257,7 @@ def run_container(
     """Run a container and return the returncode, stdout and stderr
 
     Args:
-        podman (PodmanClient): Podman client
+        client (PodmanClient|DockerClient): Podman/Docker client
         image (str): Image to run
         command (list): Command to run
         mounts (list, optional): List of mounts. Defaults to [].
@@ -262,7 +268,7 @@ def run_container(
     logging.warning(
         f"Running {image} {command} {mounts} {copy} {user} {environment} {working_dir}"
     )
-    container = podman.containers.run(
+    container = client.containers.run(
         image=image,
         command=command,
         detach=True,
@@ -278,7 +284,7 @@ def run_container(
     returncode = container.wait()
 
     # Podman 4.x changed the way logs are returned
-    if podman.version()["Version"].startswith("3"):
+    if client.version()["Version"].startswith("3."):
         delimiter = b"\n"
     else:
         delimiter = b""
@@ -310,7 +316,7 @@ def run_container(
 
     try:
         container.remove(v=True)
-        podman.volumes.prune()  # TODO: remove once v=True works
+        client.volumes.prune()  # TODO: remove once v=True works
     except Exception as e:
         logging.warning(f"Failed to remove container: {e}")
 
