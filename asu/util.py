@@ -223,7 +223,7 @@ def get_podman():
     )
 
 def get_docker():
-    return Docker(
+    return DockerClient(
         base_url=settings.container_host
     )
 
