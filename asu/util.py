@@ -289,8 +289,16 @@ def run_container(
     else:
         delimiter = b""
 
-    stdout = delimiter.join(container.logs(stdout=True, stderr=False)).decode("utf-8")
-    stderr = delimiter.join(container.logs(stdout=False, stderr=True)).decode("utf-8")
+    stdout_raw = container.logs(stdout=True, stderr=False)
+    stderr_raw = container.logs(stdout=False, stderr=True)
+
+    # Docker returns logs as a single <bytearray>, not a list of lines
+    if settings.container_type == "podman":
+        stdout = delimiter.join(container.logs(stdout=True, stderr=False)).decode("utf-8")
+        stderr = delimiter.join(container.logs(stdout=False, stderr=True)).decode("utf-8")
+    else:
+        stdout = container.logs(stdout=True, stderr=False).decode("utf-8")
+        stderr = container.logs(stdout=False, stderr=True).decode("utf-8")
 
     logging.debug(f"returncode: {returncode}")
     logging.debug(f"stdout: {stdout}")
