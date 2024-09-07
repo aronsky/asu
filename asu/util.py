@@ -274,7 +274,7 @@ def run_container(
         detach=True,
         mounts=mounts,
         cap_drop=["all"],
-        no_new_privileges=True,
+        security_opt=["no-new-privileges"],
         privileged=False,
         user=user,
         working_dir=working_dir,
